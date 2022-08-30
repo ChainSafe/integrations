@@ -26,7 +26,17 @@ export class SignerProvider {
         return accounts
     }
 
-    async sign_payload(payload){
+    async get_account(address){
+        let accounts = await this.signer_accounts();
+        for (let acc in accounts){
+            if (address == accounts[acc].address) {
+                console.log("got a matching account: ", accounts[acc]);
+                return accounts[acc]
+            }
+        }
+    }
+
+    async sign_payload(signer_address, payload){
         await this.init();
         let accounts = await web3Accounts();
 
@@ -38,7 +48,7 @@ export class SignerProvider {
 
         // `account` is of type InjectedAccountWithMeta 
         // We arbitrarily select the first account returned from the above snippet
-        const account = accounts[0];
+        const account = await this.get_account(signer_address);
 
         // to be able to retrieve the signer interface from this account
         // we can use web3FromSource which will return an InjectedExtension type

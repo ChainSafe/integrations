@@ -68,7 +68,7 @@ extern "C" {
     pub async fn signer_accounts(this: &SignerProvider) -> JsValue;
 
     #[wasm_bindgen(method)]
-    pub async fn sign_payload(this: &SignerProvider, payload: &str) -> JsValue;
+    pub async fn sign_payload(this: &SignerProvider, signer_address: &str, payload: &str) -> JsValue;
 }
 
 #[derive(Clone)]
@@ -110,10 +110,10 @@ impl Api {
         Ok(result.into_serde::<D>()?)
     }
 
-    pub async fn sign_payload(&self, payload: &[u8]) -> Result<Signature, Error> {
+    pub async fn sign_payload(&self, signer_address: &str, payload: &[u8]) -> Result<Signature, Error> {
         let payload_hex: String = prefix_hex::encode(payload);
         log::info!("api payload_hex: {}", payload_hex);
-        let signature_hex: JsValue = self.signer_provider.sign_payload(&payload_hex).await;
+        let signature_hex: JsValue = self.signer_provider.sign_payload(signer_address, &payload_hex).await;
         log::info!("api signature_hex: {:?}", signature_hex);
         let signature_str = signature_hex.as_string().expect("must be string");
         log::error!("api signature_str: {}", signature_str);

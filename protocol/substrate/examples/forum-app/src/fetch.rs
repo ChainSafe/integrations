@@ -422,7 +422,7 @@ pub async fn send_reward_via_ext(
     let (payload, extra) =
         compose_balance_transfer(api, nonce, &to, amount, tip).await?;
 
-    let signature: Signature  = api.sign_payload(&payload).await?;
+    let signature: Signature  = api.sign_payload(signer_address, &payload).await?;
 
     log::info!("rust verifying signature");
     log::info!("rust payload: {:?}", payload.as_slice());
