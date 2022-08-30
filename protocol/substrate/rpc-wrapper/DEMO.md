@@ -54,7 +54,7 @@ We modified the `substrate-node-template` with the following changes
         ```bob
 
          .-------------.                        .---------------.                        .------------------------.                    .----------------.
-         |forum-app(UI)|----(wasm-bindgen)----->|polywrap-client|---(polywrap-runtime)-->| substrate core-wrapper |-----(http rpc)---->| substrate node |
+         |forum-app(UI)|----(wasm-bindgen)----->|polywrap-client|---(polywrap-runtime)-->| substrate rpc-wrapper  |-----(http rpc)---->| substrate node |
          `-------------'                        `---------------'                        `------------------------'                    `----------------'
               (rust)                                  (js)                                      (wasm)                                (rcp-server http://localhost:9933)
 

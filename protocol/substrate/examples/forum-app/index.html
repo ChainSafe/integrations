@@ -20,19 +20,5 @@
 
         await init().catch(console.err);
         await startup().catch(console.err);
-
-        function signSomething(){
-            console.log("window.signer: ", window.signer);
-            console.log("signer provider:", window.SignerProvider);
-            let signer = new SignerProvider();
-            let payload = "6d65737361676520746f207369676e";
-            (async () => {
-                let signature = await signer.sign_payload(payload);
-                console.log("signature: ", signature);
-            })();
-        }
-        window.signSomething = signSomething;
     </script>
-    <button onclick="signSomething()">Sign Something</button>
-    </body>
 </html>

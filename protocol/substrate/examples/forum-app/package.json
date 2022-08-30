@@ -9,9 +9,10 @@
     "build:webpack": "webpack --config webpack.config.js",
     "build:parcel": "parcel build index.ts -o index.js",
     "build:browserify": "browserify index.ts -o dist/index.js",
-    "build": "yarn build:webpack && yarn build:parcel",
+    "build:fast": "yarn build:webpack && yarn build:parcel",
     "build:all": "yarn build:wasm && yarn build:webpack && yarn build:parcel",
-    "start": "yarn build:all && parcel serve index.html",
+    "start:prod": "yarn build:all && parcel serve index.html",
+    "start:fast": "yarn build:fast && parcel serve index.html",
     "fmt": "cargo +nightly fmt",
     "clean": "rm -rf node_modules && rm -rf dist cargo clean"
   },

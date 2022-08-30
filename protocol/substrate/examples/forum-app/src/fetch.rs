@@ -358,6 +358,7 @@ pub async fn add_comment(
 /// send some certain amount to this user
 pub async fn send_reward(
     api: &Api,
+    signer_address: &str,
     to: AccountId32,
     amount: u128,
     tip: Option<u128>,
@@ -394,7 +395,7 @@ pub async fn send_reward(
     // Note: This is a demonstration to show the polkadot js extension
     // warning, but the hiccup is that the signature isn't valid
     // on the rust side using the substrate library.
-    let _ = send_reward_via_ext(api, to, amount, tip).await?;
+    let _ = send_reward_via_ext(api, signer_address, to, amount, tip).await?;
     Ok(tx_hash)
 }
 
@@ -402,6 +403,7 @@ pub async fn send_reward(
 /// send some certain amount to this user
 pub async fn send_reward_via_ext(
     api: &Api,
+    signer_address: &str,
     to: AccountId32,
     amount: u128,
     tip: Option<u128>,
@@ -409,14 +411,9 @@ pub async fn send_reward_via_ext(
     let balance_transfer_call_index: [u8; 2] =
         pallet_call_index(api, "Balances", "transfer").await?;
 
-    //  le_invoker",
-    let address0 = "5ECSKL7exvngJJNoFjvbZh6xREs9cT2nYw1J43aJFuwCTneD";
-    //  "Socialee",
-    let address1 = "5CdKJEHcseY2FhCp2CiLCSimBm1bvdSCFzK58CvJ8sxZ68CH";
-    // "le_stash",
-    let address3 = "5CcsDdTtRP2WRFwZJ9UBh2dnpzHczmFQh3fKpQAfYx7doBJq";
+    log::info!("signer address: {}", signer_address);
 
-    let signer_account = AccountId32::from_ss58check(address0).expect("must be address");
+    let signer_account = AccountId32::from_ss58check(signer_address).expect("must be address");
 
     let nonce = get_nonce_for_account(api, &signer_account)
         .await?

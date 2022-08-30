@@ -10,7 +10,9 @@
     "build:webpack": "webpack --config webpack.config.js",
     "build:parcel": "parcel build index.ts -o index.js",
     "build:all": "yarn build:wasm && yarn build:webpack && yarn build:parcel",
-    "start": "yarn build:all && parcel serve -p 2222 index.html"
+    "build:fast": "yarn build:webpack && yarn build:parcel",
+    "start:prod": "yarn build:all && parcel serve -p 2222 index.html",
+    "start:fast": "yarn build:fast && parcel serve -p 2222 index.html"
   },
   "devDependencies": {
     "@polywrap/client-js": "0.2.0",

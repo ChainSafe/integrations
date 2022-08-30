@@ -1,5 +1,6 @@
 #![allow(warnings)]
 pub use api::Api;
+use api::Account;
 use content::*;
 use sauron::prelude::*;
 use serde::Serialize;
@@ -66,6 +67,8 @@ pub enum Msg {
     RewardAuthor(AccountId32),
     /// The porocessing of reward sending is done
     RewardFinish(H256),
+    AccountsReceived(Vec<Account>),
+    AccountChanged(String),
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -86,7 +89,9 @@ struct App {
     content: Option<Content>,
     new_comment: Option<String>,
     new_post: Option<String>,
+    accounts: Option<Vec<Account>>,
     api: Option<Api>,
+    selected_account: Option<String>,
 }
 
 impl Default for App {
@@ -95,7 +100,9 @@ impl Default for App {
             content: None,
             new_comment: None,
             new_post: None,
+            accounts: None,
             api: None,
+            selected_account: None,
         }
     }
 }
@@ -134,6 +141,34 @@ impl App {
                         Ok(posts) => {
                             log::info!("Go some posts..: {:?}", posts);
                             program.dispatch(Msg::PostsReceived(posts));
+                        }
+                        Err(e) => {
+                            log::error!(
+                                "Something is wrong when fetching: {}",
+                                e.to_string()
+                            );
+                            program.dispatch(Msg::Errored(
+                                Error::RequestError(e.to_string()),
+                            ));
+                        }
+                    }
+                }
+            };
+            spawn_local(async_fetch(program))
+        })
+    }
+
+    fn fetch_accounts(&self) -> Cmd<Self, Msg> {
+        log::warn!("fetching accounts..");
+        let api = self.api.clone();
+        Cmd::new(move |program| {
+            let async_fetch = |program: Program<Self, Msg>| {
+                async move {
+                    let api = api.unwrap();
+                    match api.signer_accounts().await {
+                        Ok(accounts) => {
+                            log::info!("got some accounts: {:?}", accounts);
+                            program.dispatch(Msg::AccountsReceived(accounts));
                         }
                         Err(e) => {
                             log::error!(
@@ -252,12 +287,14 @@ impl App {
     ) -> Cmd<Self, Msg> {
         log::info!("Rewarding author {} with {}..", author, reward_amount);
         let api = self.api.clone();
+        let signer_address: String = self.selected_account.clone().expect("must have a selected account");
         Cmd::new(move |program| {
             let async_fetch = |program: Program<Self, Msg>| {
                 async move {
                     let api = api.unwrap();
                     match fetch::send_reward(
                         &api,
+                        &signer_address,
                         author,
                         reward_amount,
                         Some(NETWORK_TIP_AMOUNT),
@@ -367,6 +404,25 @@ impl App {
         })
     }
 
+    fn view_accounts(&self) -> Node<Msg> {
+        div([class("accounts")],[
+            label([r#for("accounts")],[
+                text("Use account: ")
+            ]),
+            if let Some(accounts) = &self.accounts{
+            select([id("accounts"),
+                on_input(move|input|Msg::AccountChanged(input.value))
+            ],
+                accounts.iter().map(|account|{
+                    option([value(&account.address)],[text!("{} - ({})",account.meta.name, account.address)])
+                })
+            )
+            }else{
+                text("no accounts")
+            }
+        ])
+    }
+
     fn view_content(&self) -> Node<Msg> {
         match &self.content {
             Some(content) => div([class("content")], [content.view()]),
@@ -398,7 +454,10 @@ impl Application<Msg> for App {
         match msg {
             Msg::InitApi(api) => {
                 self.api = Some(api);
-                self.fetch_posts()
+                Cmd::batch(vec![
+                    self.fetch_posts(),
+                    self.fetch_accounts(),
+                ])
             }
             Msg::FetchPosts => self.fetch_posts(),
             Msg::PostsReceived(posts) => {
@@ -466,6 +525,19 @@ impl Application<Msg> for App {
                     .expect("must show the message");
                 Cmd::none()
             }
+            Msg::AccountsReceived(accounts) => {
+                //set the first as the selected account
+                if !accounts.is_empty(){
+                    self.selected_account = Some(accounts[0].address.to_string());
+                }
+                self.accounts = Some(accounts);
+                Cmd::none()
+            }
+            Msg::AccountChanged(account_address) => {
+                log::info!("using account: {:?}", account_address);
+                self.selected_account = Some(account_address);
+                Cmd::none()
+            }
         }
     }
 
@@ -473,6 +545,7 @@ impl Application<Msg> for App {
         main(
             [],
             [
+                self.view_accounts(),
                 header(
                     [],
                     [

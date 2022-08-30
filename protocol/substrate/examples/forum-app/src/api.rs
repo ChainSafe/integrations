@@ -78,6 +78,19 @@ pub struct Api {
     pub url: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct Meta{
+    pub name: String,
+    pub source: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Account{
+    pub address: String,
+    pub meta: Meta,
+    pub r#type: String,
+}
+
 impl Api {
     pub async fn new(url: &str) -> Result<Self, Error> {
         Ok(Self {
@@ -108,5 +121,12 @@ impl Api {
         log::info!("api signature length: {:?}", signature_bytes.len());
         log::info!("api signature: {:?}", signature_bytes);
         Ok(Signature::from_slice(&signature_bytes).expect("must not error"))
+    }
+
+    pub async fn signer_accounts(&self) -> Result<Vec<Account>, Error> {
+        let accounts_js: JsValue = self.signer_provider.signer_accounts().await;
+        let accounts: Vec<Account> = serde_wasm_bindgen::from_value(accounts_js).expect("must deserialize");
+        log::info!("accounts: {:?}", accounts);
+        Ok(accounts)
     }
 }
